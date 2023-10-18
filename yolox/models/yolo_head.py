@@ -443,14 +443,14 @@ class YOLOXHead(nn.Module):
             expanded_strides = expanded_strides.cpu().float()
             x_shifts = x_shifts.cpu()
             y_shifts = y_shifts.cpu()
-
+        # 粗过滤，没必要8400个anchor进行接下来的计算，选取特征点在gt里的
         fg_mask, geometry_relation = self.get_geometry_constraint(
             gt_bboxes_per_image,
             expanded_strides,
             x_shifts,
             y_shifts,
         )
-
+        # 接下来的步骤为计算cost
         bboxes_preds_per_image = bboxes_preds_per_image[fg_mask]
         cls_preds_ = cls_preds[batch_idx][fg_mask]
         obj_preds_ = obj_preds[batch_idx][fg_mask]
@@ -487,7 +487,7 @@ class YOLOXHead(nn.Module):
             + 3.0 * pair_wise_ious_loss
             + float(1e6) * (~geometry_relation)
         )
-
+        # 根据cost 进行simOTA匹配
         (
             num_fg,
             gt_matched_classes,
